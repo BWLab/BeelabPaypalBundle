@@ -3,6 +3,7 @@
 namespace Beelab\PaypalBundle\Paypal;
 
 use Beelab\PaypalBundle\Entity\Transaction;
+use Beelab\PaypalBundle\Entity\TransactionInterface;
 use Omnipay\PayPal\ExpressGateway as Gateway;
 use RuntimeException;
 use Symfony\Component\Routing\RouterInterface;
@@ -10,7 +11,7 @@ use Symfony\Component\Routing\RouterInterface;
 /**
  * Paypal service.
  */
-class Service
+class Service implements ServiceInterface
 {
     /**
      * @var Transaction
@@ -20,22 +21,22 @@ class Service
     /**
      * @var Gateway
      */
-    private $gateway;
+    protected $gateway;
 
     /**
      * @var RouterInterface
      */
-    private $router;
+    protected $router;
 
     /**
      * @var array
      */
-    private $config;
+    protected $config;
 
     /**
      * @var array
      */
-    private $params;
+    protected $params;
 
     /**
      * @param Gateway         $gateway
@@ -63,7 +64,7 @@ class Service
      *
      * @return Service
      */
-    public function setTransaction(Transaction $transaction, array $customParameters = [])
+    public function setTransaction(TransactionInterface $transaction, array $customParameters = [])
     {
         $defaultParameters = [
             'amount' => $transaction->getAmount(),
@@ -90,11 +91,11 @@ class Service
 
         return $this;
     }
-
+    
     /**
      * Start transaction. You need to call setTransaction() before.
-     *
      * @return \Omnipay\Common\Message\ResponseInterface
+     * @throws Exception
      */
     public function start()
     {

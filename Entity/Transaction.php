@@ -2,6 +2,7 @@
 
 namespace Beelab\PaypalBundle\Entity;
 
+use Beelab\PaypalBundle\Paypal\TransactionStatuses;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
@@ -9,20 +10,8 @@ use Doctrine\ORM\Mapping as ORM;
  *
  * @ORM\MappedSuperclass
  */
-abstract class Transaction
+abstract class Transaction implements TransactionInterface
 {
-    const STATUS_KO = -1;
-    const STATUS_STARTED = 0;
-    const STATUS_OK = 1;
-    const STATUS_ERROR = 2;
-
-    public static $statuses = [
-        self::STATUS_STARTED => 'started',
-        self::STATUS_OK => 'success',
-        self::STATUS_KO => 'canceled',
-        self::STATUS_ERROR => 'failed',
-    ];
-
     /**
      * @var int
      *
@@ -51,7 +40,7 @@ abstract class Transaction
      *
      * @ORM\Column(type="smallint", options={"default": 0})
      */
-    protected $status = self::STATUS_STARTED;
+    protected $status = TransactionStatuses::STATUS_STARTED;
 
     /**
      * @var string
@@ -123,7 +112,7 @@ abstract class Transaction
 
     public function getStatusLabel(): string
     {
-        return isset(static::$statuses[$this->status]) ? static::$statuses[$this->status] : 'invalid';
+        return isset(TransactionStatuses::$statuses[$this->status]) ? TransactionStatuses::$statuses[$this->status] : 'invalid';
     }
 
     public function setToken(?string $token): self
@@ -150,8 +139,8 @@ abstract class Transaction
 
     public function complete(array $response): void
     {
-        if (self::STATUS_OK !== $this->status) {
-            $this->status = self::STATUS_OK;
+        if (TransactionStatuses::STATUS_OK !== $this->status) {
+            $this->status = TransactionStatuses::STATUS_OK;
             $this->end = new \DateTime();
             $this->response = $response;
         }
@@ -159,20 +148,20 @@ abstract class Transaction
 
     public function cancel(): void
     {
-        $this->status = self::STATUS_KO;
+        $this->status = TransactionStatuses::STATUS_KO;
         $this->end = new \DateTime();
     }
 
     public function error(array $response): void
     {
-        $this->status = self::STATUS_ERROR;
+        $this->status = TransactionStatuses::STATUS_ERROR;
         $this->end = new \DateTime();
         $this->response = $response;
     }
 
     public function isOk(): bool
     {
-        return self::STATUS_OK === $this->status;
+        return TransactionStatuses::STATUS_OK === $this->status;
     }
 
     public function getDescription(): ?string
